@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GuardianTag — Device Simulator</title>
+<style>
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #0f1115;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #888; margin-bottom: 24px; font-size: 14px; }
+  .card {
+    background: #1a1d24;
+    border: 1px solid #2a2e37;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+  }
+  label { font-size: 13px; color: #aaa; display: block; margin-bottom: 6px; }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background: #0f1115;
+    color: #eee;
+    margin-bottom: 16px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .status { font-size: 13px; margin-bottom: 16px; }
+  .status.armed { color: #4ade80; }
+  .status.disarmed { color: #888; }
+  button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  button:active { opacity: 0.7; }
+  #armBtn { background: #2563eb; color: white; }
+  #openBtn { background: #f59e0b; color: #1a1a1a; }
+  #shakeBtn { background: #f97316; color: #1a1a1a; }
+  #wifiBtn { background: #374151; color: #eee; }
+  #resetBtn { background: transparent; color: #888; border: 1px solid #333; }
+  #log {
+    margin-top: 20px;
+    background: #0a0b0d;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    color: #9ca3af;
+  }
+  .log-line { margin-bottom: 4px; }
+  .log-line.error { color: #f87171; }
+  .log-line.success { color: #4ade80; }
+</style>
+</head>
+<body>
+
+<h1>🛡️ GuardianTag — Device Simulator</h1>
+<div class="sub">Stands in for the ESP32. Sends the same events real hardware would.</div>
+
+<div class="card">
+  <label>Backend URL</label>
+  <input id="backendUrl" value="http://127.0.0.1:8000" />
+
+  <label>Device ID</label>
+  <input id="deviceId" placeholder="paste device_id here" />
+
+  <div id="statusLine" class="status disarmed">● Device: not armed</div>
+
+  <button id="armBtn" onclick="toggleArm()">Arm Device</button>
+  <button id="openBtn" onclick="sendEvent('open')">🔓 Open Bag</button>
+  <button id="shakeBtn" onclick="sendEvent('tilt')">📳 Shake / Move</button>
+  <button id="wifiBtn" onclick="toggleWifi()">📶 Toggle Wi-Fi (simulated)</button>
+  <button id="resetBtn" onclick="clearLog()">Clear Log</button>
+
+  <div id="log"></div>
+</div>
+
+<script>
+let armed = false;
+let wifiUp = true;
+
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + cls;
+  const time = new Date().toLocaleTimeString();
+  line.textContent = `[${time}] ${msg}`;
+  el.prepend(line);
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+}
+
+function toggleArm() {
+  armed = !armed;
+  const statusEl = document.getElementById('statusLine');
+  statusEl.textContent = armed ? '● Device: ARMED' : '● Device: not armed';
+  statusEl.className = 'status ' + (armed ? 'armed' : 'disarmed');
+  log(armed ? 'Device armed' : 'Device disarmed');
+}
+
+function toggleWifi() {
+  wifiUp = !wifiUp;
+  log(wifiUp ? 'Wi-Fi restored (simulated)' : 'Wi-Fi disconnected (simulated) — event will NOT reach backend', wifiUp ? 'success' : 'error');
+}
+
+async function sendEvent(type) {
+  const deviceId = document.getElementById('deviceId').value.trim();
+  const backend = document.getElementById('backendUrl').value.trim();
+
+  if (!deviceId) {
+    log('Enter a device_id first.', 'error');
+    return;
+  }
+
+  if (!wifiUp) {
+    log(`[LOCAL ONLY] ${type} detected — buzzer would fire locally, but Wi-Fi is down so no event reaches backend.`, 'error');
+    return;
+  }
+
+  if (!armed) {
+    log(`${type} detected, but device is not armed — ignoring.`);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${backend}/api/v1/events/?device_id=${deviceId}&type=${type}`, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    log(`Sent "${type}" event → id=${data.id}`, 'success');
+  } catch (err) {
+    log(`Failed to send event: ${err.message}`, 'error');
+  }
+}
+</script>
+
+</body>
+</html>
