@@ -1,11 +1,10 @@
-import { Text, View } from "react-native";
+import { View, Text } from "react-native";
 
-export default function Index() {
+export default function Splash() {
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text className="text-red-600">
-        Edit app/index.tsx to edit this screen.
-      </Text>
+    <View className="flex-1 items-center justify-center bg-background">
+      <Text className="text-3xl font-extrabold text-primary">GuardianTag</Text>
+      <Text className="text-muted mt-2">Bag & Locker Security, Guarded.</Text>
     </View>
   );
 }
