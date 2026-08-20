@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     cors_origins: str = "http://localhost:8081"
 
-    database_url: str = "postgresql+psycopg2://guardiantag:guardiantag@localhost:5432/guardiantag"
+    database_url: str = "postgresql+psycopg2://hostdost:hostdost@localhost:5432/hostdost"
 
     clerk_secret_key: str = ""
     clerk_publishable_key: str = ""
@@ -30,3 +30,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+settings = get_settings()
