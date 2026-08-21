@@ -15,4 +15,4 @@
 // of the backend, so an emergency notification still goes out even if the
 // API is unreachable (as long as Wi-Fi/internet is up).
 #define TELEGRAM_BOT_TOKEN ""
-#define TELEGRAM_CHAT_ID ""
+#define TELEGRAM_CHAT_ID ""docker ps

@@ -43,7 +43,7 @@ export function DeviceSocketsProvider({ children }: { children: React.ReactNode 
             (message.incident.title as string) ?? "Unverified movement detected",
             [
               { text: "Dismiss", style: "cancel" },
-              { text: "View", onPress: () => router.push("/(app)/emergency-alert") },
+              //{ text: "View", onPress: () => router.push("/(app)/emergency-alert") },
             ],
           );
           break;

@@ -8,15 +8,12 @@
     "userInterfaceStyle": "dark",
     "scheme": "guardiantag",
     "newArchEnabled": true,
-
     "experiments": {
       "typedRoutes": true
     },
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0A",
@@ -24,13 +21,12 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.mobile"
     },
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       "expo-splash-screen",

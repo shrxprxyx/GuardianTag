@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, Pressable, ActivityIndicator, ScrollView } from "react-native";
 import { useSignIn } from "@clerk/expo";
 import { Link } from "expo-router";
 import { useApi } from "@/hooks/useApi";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 export default function Login() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const api = useApi();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const keyboardHeight = useKeyboardHeight();
 
   const loading = fetchStatus === "fetching";
 
@@ -25,7 +27,13 @@ export default function Login() {
   };
 
   return (
-    <View className="flex-1 bg-background px-6 justify-center">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="flex-grow justify-center px-6"
+      contentContainerStyle={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight + 24 : 0 }}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
       <Text className="text-3xl font-extrabold text-white mb-1">Welcome back</Text>
       <Text className="text-muted mb-8">Sign in to keep watch over your devices.</Text>
 
@@ -59,16 +67,39 @@ export default function Login() {
       )}
 
       <Pressable
-        className="bg-primary rounded-xl py-3 items-center mb-4"
         onPress={onSubmit}
         disabled={loading}
+        style={{
+          width: "100%",
+          height: 52,
+          backgroundColor: "#69D7B8",
+          borderRadius: 12,
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 16,
+          paddingHorizontal: 20,
+        }}
       >
-        {loading ? <ActivityIndicator color="white" /> : <Text className="text-white font-semibold">Sign In</Text>}
+        {loading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 16,
+              fontWeight: "600",
+              textAlign: "center",
+              width: "100%",
+            }}
+          >
+            Sign In
+          </Text>
+        )}
       </Pressable>
 
       <Link href="/(auth)/register" className="text-center text-primary-light">
         Don&apos;t have an account? Register
       </Link>
-    </View>
+    </ScrollView>
   );
 }
