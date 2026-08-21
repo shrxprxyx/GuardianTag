@@ -45,3 +45,9 @@ class SecurityScoreOut(ORMBase):
     level: GuardianLevel
     streak_days: int
     last_calculated_at: datetime
+
+
+class DailyCheckOut(ORMBase):
+    done_today: bool
+    streak_days: int
+    xp_reward: int

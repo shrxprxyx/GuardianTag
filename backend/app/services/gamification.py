@@ -25,6 +25,9 @@ LEVEL_THRESHOLDS: list[tuple[int, GuardianLevel]] = [
     (1500, GuardianLevel.HOSTEL_PROTECTOR),
 ]
 
+DAILY_CHECK_XP_REWARD = 15
+DAILY_CHECK_REFERENCE_TYPE = "daily_check"
+
 
 def _level_for_score(score: int) -> GuardianLevel:
     level = GuardianLevel.ROOKIE
@@ -64,8 +67,9 @@ def award_xp(
     """Records an XP transaction and updates the user's rolling score/level/streak.
 
     Only ever called for a positive security habit (arming an asset, resolving
-    an incident, disarming within the alert window) - never for the sensor
-    trigger itself, so gamification can't reward setting off an alarm.
+    an incident, disarming within the alert window, or checking in for the
+    day) - never for the sensor trigger itself, so gamification can't reward
+    setting off an alarm.
     """
     now = datetime.now(timezone.utc)
     transaction = XPTransaction(
@@ -96,6 +100,54 @@ def award_xp(
     db.commit()
     db.refresh(transaction)
     return transaction
+
+
+def has_checked_in_today(db: Session, user: User) -> bool:
+    """Whether the user has already claimed today's daily-check XP.
+
+    Deliberately checked via a dedicated daily_check XP transaction rather
+    than SecurityScore.last_calculated_at's date, since that timestamp is
+    bumped by ANY award_xp call (arming an asset, resolving an incident,
+    etc) - using it here would wrongly report "already checked in today"
+    just because some other XP-earning action happened today.
+    """
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return (
+        db.query(XPTransaction)
+        .filter(
+            XPTransaction.user_id == user.id,
+            XPTransaction.reference_type == DAILY_CHECK_REFERENCE_TYPE,
+            XPTransaction.created_at >= today_start,
+        )
+        .first()
+        is not None
+    )
+
+
+def get_daily_check_status(db: Session, user: User) -> tuple[bool, int, int]:
+    """Read-only status check - does not award anything. Returns
+    (done_today, streak_days, xp_reward)."""
+    security_score = get_or_create_security_score(db, user)
+    db.commit()
+    return has_checked_in_today(db, user), security_score.streak_days, DAILY_CHECK_XP_REWARD
+
+
+def perform_daily_check(db: Session, user: User) -> tuple[bool, int, int]:
+    """Claims today's daily-check XP if not already claimed today. Idempotent:
+    calling this again later the same day just reports the existing state
+    rather than double-awarding. Returns (done_today, streak_days, xp_reward)."""
+    if has_checked_in_today(db, user):
+        security_score = get_or_create_security_score(db, user)
+        db.commit()
+        return True, security_score.streak_days, DAILY_CHECK_XP_REWARD
+
+    award_xp(db, user, DAILY_CHECK_XP_REWARD, "Daily guardian check-in", reference_type=DAILY_CHECK_REFERENCE_TYPE)
+    evaluate_gamification(db, user)
+
+    security_score = get_or_create_security_score(db, user)
+    db.commit()
+    return True, security_score.streak_days, DAILY_CHECK_XP_REWARD
 
 
 def _metric_value(db: Session, user: User, security_score: SecurityScore, metric: str) -> int:

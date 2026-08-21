@@ -8,11 +8,12 @@ from app.models.user import User
 from app.schemas.gamification import (
     AchievementOut,
     ChallengeOut,
+    DailyCheckOut,
     SecurityScoreOut,
     UserAchievementOut,
     XPTransactionOut,
 )
-from app.services.gamification import get_or_create_security_score
+from app.services.gamification import get_daily_check_status, get_or_create_security_score, perform_daily_check
 
 router = APIRouter(prefix="/gamification", tags=["gamification"])
 
@@ -59,3 +60,19 @@ def get_security_score(
     score = get_or_create_security_score(db, current_user)
     db.commit()
     return score
+
+
+@router.get("/daily-check", response_model=DailyCheckOut)
+def get_daily_check(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> DailyCheckOut:
+    done_today, streak_days, xp_reward = get_daily_check_status(db, current_user)
+    return DailyCheckOut(done_today=done_today, streak_days=streak_days, xp_reward=xp_reward)
+
+
+@router.post("/daily-check", response_model=DailyCheckOut)
+def post_daily_check(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> DailyCheckOut:
+    done_today, streak_days, xp_reward = perform_daily_check(db, current_user)
+    return DailyCheckOut(done_today=done_today, streak_days=streak_days, xp_reward=xp_reward)
