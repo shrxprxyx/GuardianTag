@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -18,8 +19,10 @@ def sync_profile(
 ) -> User:
     """Upserts the local profile for the Clerk identity in the request's verified token.
 
-    Called by the mobile app right after sign-in/sign-up so a profile exists even if the
-    Clerk webhook hasn't landed yet.
+    Called automatically whenever a signed-in session is detected (see AuthGate on the
+    frontend), so it can legitimately be called more than once concurrently for the same
+    user - e.g. on app relaunch. This is written to be safe under that concurrency rather
+    than assuming it's only ever called once per account.
     """
     claims = get_current_claims(request)
     clerk_user_id = claims.get("sub")
@@ -27,11 +30,41 @@ def sync_profile(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token missing subject claim")
 
     user = db.query(User).filter(User.clerk_user_id == clerk_user_id).first()
-    if user is None:
-        user = User(clerk_user_id=clerk_user_id, **payload.model_dump())
-        db.add(user)
+    if user is not None:
+        return user
+
+    # A row may already exist for this email under a different (old/stale)
+    # clerk_user_id - e.g. the Clerk account was deleted and recreated, or
+    # (common in dev) the database was reset independently of Clerk's own
+    # state. Re-linking it here avoids a unique-constraint crash on email and
+    # keeps the person's existing profile/history intact instead of silently
+    # failing to create a new one.
+    existing_by_email = db.query(User).filter(User.email == payload.email).first()
+    if existing_by_email is not None:
+        existing_by_email.clerk_user_id = clerk_user_id
         db.commit()
-        db.refresh(user)
+        db.refresh(existing_by_email)
+        return existing_by_email
+
+    user = User(clerk_user_id=clerk_user_id, **payload.model_dump())
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        # Another concurrent sync call for the same identity won the race and
+        # inserted first (e.g. two near-simultaneous /auth/sync calls on
+        # login). Roll back this attempt and return whichever row actually
+        # landed, instead of surfacing a 500 for a harmless race.
+        db.rollback()
+        winner = (
+            db.query(User)
+            .filter((User.clerk_user_id == clerk_user_id) | (User.email == payload.email))
+            .first()
+        )
+        if winner is None:
+            raise
+        return winner
+    db.refresh(user)
     return user
 
 
