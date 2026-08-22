@@ -1,4 +1,4 @@
-export type GuardianLevel = "rookie_guardian" | "alert_guardian" | "protector" | "guardian_pro";
+export type GuardianLevel = "rookie" | "watchman" | "guardian" | "sentinel" | "hostel_protector";
 export type DeviceStatus = "unpaired" | "online" | "offline" | "degraded";
 export type AssetCategory = "bag" | "laptop" | "document" | "other";
 export type SensorEventType = "movement" | "hall_trigger" | "dual_verified" | "disarmed" | "heartbeat";

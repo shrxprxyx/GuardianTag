@@ -1,12 +1,37 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { View } from "react-native";
-import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useRouter, useSegments } from "expo-router";
+import { useApi } from "@/hooks/useApi";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
   const segments = useSegments();
   const router = useRouter();
+  const api = useApi();
+  const hasSynced = useRef(false);
+
+  // Safety net for a signed-in Clerk session whose backend profile doesn't
+  // exist - e.g. after a dev database reset. login.tsx/register.tsx already
+  // call /auth/sync right after their own sign-in/sign-up, but that only
+  // fires during that specific action - a session resumed on app relaunch
+  // never re-runs it. /auth/sync only creates when missing, so calling it
+  // again here is always safe. Runs once per signed-in session (not on every
+  // render) via the ref guard.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user || hasSynced.current) return;
+    hasSynced.current = true;
+
+    const email = user.primaryEmailAddress?.emailAddress ?? "";
+    const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || email;
+
+    api.post("/auth/sync", { email, full_name: fullName }).catch(() => {
+      // If this fails (e.g. backend briefly unreachable), allow a retry on
+      // the next mount rather than silently giving up for the whole session.
+      hasSynced.current = false;
+    });
+  }, [isLoaded, isSignedIn, user, api]);
 
   useEffect(() => {
     if (!isLoaded) return;

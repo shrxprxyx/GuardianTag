@@ -21,11 +21,14 @@ export type DeviceStatusLabel = "Online" | "Degraded" | "Offline";
 
 export const deviceStatusLabels: DeviceStatusLabel[] = ["Online", "Degraded", "Offline"];
 
-export type GuardianLevelLabel = "Rookie Guardian" | "Alert Guardian" | "Protector" | "Guardian Pro";
+// Matches the backend's GuardianLevel enum exactly (app/models/enums.py) -
+// these are the 5 real level values, lowest to highest.
+export type GuardianLevel = "rookie" | "watchman" | "guardian" | "sentinel" | "hostel_protector";
 
-export const guardianLevels: GuardianLevelLabel[] = [
-  "Rookie Guardian",
-  "Alert Guardian",
-  "Protector",
-  "Guardian Pro",
-];
+export const guardianLevelLabels: Record<GuardianLevel, string> = {
+  rookie: "Rookie",
+  watchman: "Watchman",
+  guardian: "Guardian",
+  sentinel: "Sentinel",
+  hostel_protector: "Hostel Protector",
+};

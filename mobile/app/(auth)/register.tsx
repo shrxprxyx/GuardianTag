@@ -8,13 +8,11 @@ import {
   ScrollView,
 } from "react-native";
 import { useSignUp } from "@clerk/expo";
-import { Link } from "expo-router";
-import { useApi } from "@/hooks/useApi";
+import { Link, router } from "expo-router";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 export default function Register() {
   const { signUp, errors, fetchStatus } = useSignUp();
-  const api = useApi();
   const keyboardHeight = useKeyboardHeight();
 
   const [fullName, setFullName] = useState("");
@@ -52,11 +50,11 @@ export default function Register() {
 
       if (signUp.status === "complete") {
         await signUp.finalize();
-
-        await api.post("/auth/sync", {
-          email,
-          full_name: fullName,
-        });
+        // Profile sync now happens centrally in AuthGate as soon as it
+        // detects a signed-in session, so there's no need to call
+        // /auth/sync here too - doing both was causing a race between the
+        // two concurrent calls.
+        router.replace("/(app)/home");
       } else {
         setVerifyError("Verification incomplete. Please try again.");
       }
