@@ -1,4 +1,8 @@
-import { ScrollView, View, RefreshControl } from "react-native";
+import {
+  ScrollView,
+  View,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/constants/theme";
 
@@ -16,7 +20,10 @@ export function ScreenContainer({
   if (!scroll) {
     return (
       <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 px-5" style={{ paddingBottom: 110 }}>
+        <View
+          className="flex-1 px-5 w-full"
+          style={{ paddingBottom: 110 }}
+        >
           {children}
         </View>
       </SafeAreaView>
@@ -26,11 +33,20 @@ export function ScreenContainer({
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
-        className="flex-1 px-5"
-        contentContainerStyle={{ paddingBottom: 110, paddingTop: 4 }}
+        className="flex-1"
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 110,
+          paddingTop: 4,
+          width: "100%",
+        }}
         refreshControl={
           onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
           ) : undefined
         }
       >
