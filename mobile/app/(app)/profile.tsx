@@ -3,6 +3,7 @@ import { View, Text, TextInput } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@clerk/expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Feather } from "@expo/vector-icons";
 import { useApi } from "@/hooks/useApi";
 import { ScreenContainer } from "@/components/ui/ScreenContainer";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -152,8 +153,8 @@ export default function Profile() {
             <ListRow
               icon="map-pin"
               title="Hostel map"
-              showChevron
-              onPress={() => router.push("/(app)/hostel-map")}
+              subtitle="Coming soon"
+              right={<Feather name="lock" size={14} color={colors.muted} />}
             />
             <ListRow
               icon="settings"
@@ -177,4 +178,4 @@ export default function Profile() {
       ) : null}
     </ScreenContainer>
   );
-}   
+}
