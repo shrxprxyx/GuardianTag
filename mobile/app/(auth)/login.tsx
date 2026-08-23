@@ -4,12 +4,15 @@ import {
   Text,
   TextInput,
   Pressable,
-  ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { useSignIn, useAuth } from "@clerk/expo";
 import { Link, router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
+import { BrandHeader } from "@/components/ui/BrandHeader";
+import { Button } from "@/components/ui/Button";
+import { colors } from "@/constants/theme";
 
 export default function Login() {
   const { signIn, errors, fetchStatus } = useSignIn();
@@ -17,6 +20,7 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const keyboardHeight = useKeyboardHeight();
@@ -68,13 +72,13 @@ export default function Login() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text className="text-3xl font-extrabold text-white mb-1">
-        Welcome back
-      </Text>
-
-      <Text className="text-muted mb-8">
-        Sign in to keep watch over your devices.
-      </Text>
+      <View className="items-center mb-8">
+        <BrandHeader size={40} />
+        <Text className="text-xl font-bold text-white mt-4 mb-1">
+          Welcome to GuardianTag
+        </Text>
+        <Text className="text-muted">Sign in to continue</Text>
+      </View>
 
       {/* DEV-ONLY sign out */}
       {__DEV__ && isSignedIn ? (
@@ -112,19 +116,28 @@ export default function Login() {
       )}
 
       {/* Password */}
-      <TextInput
-        className="bg-surface text-white rounded-xl px-4 py-3 mb-1 border border-border"
-        placeholder="Password"
-        placeholderTextColor="#8B8B9E"
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        value={password}
-        onChangeText={(text) => {
-          setPassword(text);
-          setFormError(null);
-        }}
-      />
+      <View className="relative justify-center mb-1">
+        <TextInput
+          className="bg-surface text-white rounded-xl px-4 py-3 pr-11 border border-border"
+          placeholder="Password"
+          placeholderTextColor="#8B8B9E"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            setFormError(null);
+          }}
+        />
+        <Pressable
+          onPress={() => setShowPassword((prev) => !prev)}
+          className="absolute right-3 h-full justify-center px-1"
+          hitSlop={8}
+        >
+          <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={colors.muted} />
+        </Pressable>
+      </View>
 
       {errors?.fields?.password ? (
         <Text className="text-emergency text-xs mb-3">
@@ -142,36 +155,9 @@ export default function Login() {
       ) : null}
 
       {/* Sign In button */}
-      <Pressable
-        onPress={onSubmit}
-        disabled={loading}
-        style={{
-          width: "100%",
-          height: 52,
-          backgroundColor: "#69D7B8",
-          borderRadius: 12,
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 16,
-          paddingHorizontal: 20,
-        }}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontSize: 16,
-              fontWeight: "600",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            Sign In
-          </Text>
-        )}
-      </Pressable>
+      <View className="mb-4">
+        <Button label="Sign In" onPress={onSubmit} loading={loading} disabled={loading} />
+      </View>
 
       {/* Register */}
       <Link

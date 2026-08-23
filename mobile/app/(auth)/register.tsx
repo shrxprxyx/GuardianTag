@@ -9,7 +9,11 @@ import {
 } from "react-native";
 import { useSignUp } from "@clerk/expo";
 import { Link, router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
+import { BrandHeader } from "@/components/ui/BrandHeader";
+import { Button } from "@/components/ui/Button";
+import { colors } from "@/constants/theme";
 
 export default function Register() {
   const { signUp, errors, fetchStatus } = useSignUp();
@@ -18,6 +22,7 @@ export default function Register() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
   const [pendingVerification, setPendingVerification] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
@@ -129,13 +134,13 @@ export default function Register() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text className="text-3xl font-extrabold text-center text-white mb-1">
-        Create Account
-      </Text>
-
-      <Text className="text-muted text-center mb-8">
-        Guard your devices from day one.
-      </Text>
+      <View className="items-center mb-8">
+        <BrandHeader size={40} />
+        <Text className="text-xl font-bold text-white mt-4 mb-1">
+          Create Account
+        </Text>
+        <Text className="text-muted">Guard your devices from day one.</Text>
+      </View>
 
       {/* Full Name */}
       <TextInput
@@ -168,14 +173,23 @@ export default function Register() {
       )}
 
       {/* Password */}
-      <TextInput
-        className="bg-surface text-white rounded-xl px-4 py-3 mb-1 border border-border"
-        placeholder="Password"
-        placeholderTextColor="#8B8B9E"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View className="relative justify-center mb-1">
+        <TextInput
+          className="bg-surface text-white rounded-xl px-4 py-3 pr-11 border border-border"
+          placeholder="Password"
+          placeholderTextColor="#8B8B9E"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <Pressable
+          onPress={() => setShowPassword((prev) => !prev)}
+          className="absolute right-3 h-full justify-center px-1"
+          hitSlop={8}
+        >
+          <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={colors.muted} />
+        </Pressable>
+      </View>
 
       {errors?.fields?.password ? (
         <Text className="text-emergency text-xs mb-3">
@@ -186,36 +200,9 @@ export default function Register() {
       )}
 
       {/* Create Account Button */}
-      <Pressable
-        onPress={onSubmit}
-        disabled={loading}
-        style={{
-          width: "100%",
-          height: 52,
-          backgroundColor: '#69D7B8',
-          borderRadius: 12,
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 16,
-          paddingHorizontal: 20,
-        }}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontSize: 16,
-              fontWeight: "600",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            Create Account
-          </Text>
-        )}
-      </Pressable>
+      <View className="mb-4">
+        <Button label="Create Account" onPress={onSubmit} loading={loading} disabled={loading} />
+      </View>
       <View
         nativeID="clerk-captcha"
         style={{ minHeight: 1 }}

@@ -1,11 +1,20 @@
-import { Pressable, Text, ActivityIndicator } from "react-native";
+import {
+  Pressable,
+  Text,
+  ActivityIndicator,
+} from "react-native";
 
-export type ButtonVariant = "primary" | "danger" | "secondary" | "ghost";
+export type ButtonVariant =
+  | "primary"
+  | "danger"
+  | "secondary"
+  | "ghost";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: "bg-primary",
   danger: "bg-emergency",
-  secondary: "bg-surface-alt dark:bg-[#1B1D24] border border-border",
+  secondary:
+    "bg-surface-alt dark:bg-[#1B1D24] border border-border",
   ghost: "bg-transparent",
 };
 
@@ -30,16 +39,31 @@ export function Button({
   disabled?: boolean;
 }) {
   const isDisabled = disabled || loading;
+
   return (
     <Pressable
       onPress={onPress}
       disabled={isDisabled}
-      className={`rounded-xl py-3.5 items-center ${variantClasses[variant]} ${isDisabled ? "opacity-40" : ""}`}
+      className={`w-full rounded-xl py-3.5 px-4 items-center justify-center ${
+        variantClasses[variant]
+      } ${isDisabled ? "opacity-40" : ""}`}
     >
       {loading ? (
         <ActivityIndicator color="white" />
       ) : (
-        <Text className={`font-semibold text-[15px] ${textClasses[variant]}`}>{label}</Text>
+        <Text
+          className={textClasses[variant]}
+          numberOfLines={1}
+          style={{
+            fontSize: 15,
+            fontWeight: "600",
+            textAlign: "center",
+            minWidth: 110,
+            flexShrink: 0,
+          }}
+        >
+          {label}
+        </Text>
       )}
     </Pressable>
   );
